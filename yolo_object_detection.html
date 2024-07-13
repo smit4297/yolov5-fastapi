@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLO Road Object Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1e1e1e;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            color: #ff9900;
+        }
+
+        #imageUploadForm {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            max-width: 800px;
+            width: 90%;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        label {
+            display: block;
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px 0;
+        }
+
+        label:hover {
+            background-color: #2980b9;
+        }
+
+        #fileLabel {
+            background-color: #2ecc71;
+        }
+
+        button[type="submit"] {
+            background-color: #ff9900;
+            color: #fff;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #ff8000;
+        }
+
+        hr {
+            margin: 20px 0;
+            border: none;
+            border-top: 1px solid #555;
+        }
+
+        h2 {
+            color: #ff9900;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: nowrap; /* Prevent images from wrapping to the next line */
+            overflow-x: auto; /* Add horizontal scroll if necessary */
+            padding: 20px; /* Add padding around the images */
+        }
+
+        .image-container img {
+            width: 100%; /* Make the images fill the entire width of the container */
+            height: auto; /* Automatically adjust the height to maintain aspect ratio */
+            margin: 10px 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 48%;
+            height: auto;
+            margin: 10px 0;
+            background-color: #444; /* Lighter background color */
+            padding: 20px; /* Add padding for a lighter area */
+            text-align: center; /* Center the text within the placeholder */
+            border-radius: 5px;
+        }
+
+        .placeholder:first-child {
+            margin-right: 10px; /* Add margin to the right side of the first placeholder */
+        }
+
+        .placeholder:last-child {
+            margin-left: 10px; /* Add margin to the left side of the second placeholder */
+        }
+
+        .label {
+            color: #ff9900;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>YOLO Road Object Detection</h1>
+    <form id="imageUploadForm" enctype="multipart/form-data">
+        <label for="fileInput" id="fileLabel">Choose an Image or Video</label>
+        <input type="file" id="fileInput" accept="image/*, video/*" />
+        <button type="submit" id="detectButton">Detect Objects</button>
+    </form>
+    <hr />
+    <h2>Detected Objects</h2>
+    <div class="image-container">
+        <div class="placeholder">
+            <div class="label">Original Image/Video</div>
+            <img id="originalImage" src="" alt="" />
+        </div>
+        <div class="placeholder">
+            <div class="label">Generated Image/Video</div>
+            <img id="resultImage" src="" alt="" />
+        </div>
+    </div>
+    <div id="loader" style="display: none;">
+        <p>Loading...</p>
+    </div>
+
+    <script>
+        document.getElementById("imageUploadForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById("fileInput");
+            const originalImage = document.getElementById("originalImage");
+            const resultImage = document.getElementById("resultImage");
+            const loader = document.getElementById("loader");
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            // Display the loader while processing the request
+            loader.style.display = "block";
+
+            // Check the file type
+            if (fileInput.files[0].type.startsWith("image")) {
+                // If it's an image, call the image API endpoint
+                fetch("http://127.0.0.1:8000/object-to-img", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    originalImage.src = URL.createObjectURL(fileInput.files[0]);
+                    resultImage.src = url;
+                    loader.style.display = "none"; // Hide the loader
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    loader.style.display = "none"; // Hide the loader on error
+                });
+            } else if (fileInput.files[0].type.startsWith("video")) {
+                // If it's a video, call the video API endpoint
+                fetch("http://127.0.0.1:8000/object-to-video", {
+                    method: "POST",
+                    body: formData
+                })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    originalImage.src = URL.createObjectURL(fileInput.files[0]);
+                    resultImage.src = url;
+                    loader.style.display = "none"; // Hide the loader
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    loader.style.display = "none"; // Hide the loader on error
+                });
+            }
+        });
+    </script>
+</body>
+</html>
